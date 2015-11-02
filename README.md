@@ -1,5 +1,9 @@
 # pgbench_py
 
+# This is written for mostly cross Windows and has been tested on Linux (ubuntu) as Well.
+# The linux version could be found here : 
+#  https://github.com/gregs1104/pgbench-tools
+
 -- This uses configobj module to read the config file
 
 =====Requirements=====

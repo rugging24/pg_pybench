@@ -2,7 +2,7 @@
 
 import subprocess,sys
 import utilfunc as uf
-import benchwarmer as bw
+import runtests as bw
 import getTests as tests
 
 
