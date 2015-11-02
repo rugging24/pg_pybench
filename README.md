@@ -1,6 +1,6 @@
 # pgbench_py
 
-# This is written for mostly cross Windows and has been tested on Linux (ubuntu) as Well.
+# This is written for mostly  Windows and has been tested on Linux (ubuntu) as Well.
 # The linux version could be found here : 
 #  https://github.com/gregs1104/pgbench-tools
 
