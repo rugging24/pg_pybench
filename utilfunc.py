@@ -32,7 +32,7 @@ def getLevelScale() :
 	mem = psutil.virtual_memory()
 	RAM = math.ceil(mem.total/float(1024*1024*1024))	
 	# set the scale 
-	ration = '0.1' # 0.9 4.0'
+	ration = '0.1 0.9 4.0'
 	SCALES = []
 	for r in ration.split() :
 		SCALES.append(int(math.ceil((float(68) * float(r) * float(RAM)))))
