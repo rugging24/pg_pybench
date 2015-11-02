@@ -25,3 +25,6 @@
 
 python runset.py -c|--conf pgbench.conf [--query-mode simple|extended|prepared] --test-type read|write|update|all
 -
+
+
+-- More features to follow soon :) 
