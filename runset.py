@@ -2,8 +2,8 @@
 
 import subprocess,sys
 import utilfunc as uf
-import runtests as bw
-import getTests as tests
+import performTests as bw
+import formTestQuery as tests
 
 
 if __name__ == "__main__" :
