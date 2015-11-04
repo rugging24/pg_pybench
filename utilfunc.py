@@ -73,10 +73,10 @@ def storeTestLatency(test) :
 def copyTimingCSV(basedir) :
 	return " copy timing from '{0:s}' with csv ".format(basedir + '/timing.csv')
 
-def insertTestResult(script,client,thread,scale,resultdb,start,tps,trans) :
+def insertTestResult(script,client,thread,scale,testdb,start,tps,trans) :
 	return "insert into tests(script,clients,workers,set,scale,dbsize,start_time,end_time,tps,trans) \
                 select '{0:s}','{1:s}','{2:s}',max(set),'{3:s}',pg_database_size('{4:s}'),'{5:s}',now(),{6:s},{7:s} from testset"\
-                " returning test".format( script,str(client),str(thread),str(scale),resultdb,str(start.rstrip()),str(tps),str(trans)  )
+                " returning test".format( script,str(client),str(thread),str(scale),testdb,str(start.rstrip()),str(tps),str(trans)  )
 
 def getPGVersion():
 	return "select substring(version() from '(\d\.\d)')"
