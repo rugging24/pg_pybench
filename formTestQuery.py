@@ -47,4 +47,6 @@ def formulateTestQuery(testType) :
 		writeTests(fname,l)
 	elif testType == 'all' :
 		writeTests(fname,texts()[0:])
+	elif testType == 'custom' :
+		fname = 'custom'
 	return fname
