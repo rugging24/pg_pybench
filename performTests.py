@@ -46,7 +46,7 @@ def runBenchwarmer (repeat,scale,client,script,param) :
 	r.close()
 		
 	test = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',\
-               uf.insertTestResult( script,client,thread,scale,param['RESULTDB'],start.rstrip(),tps,trans  )] )
+               uf.insertTestResult( script,client,thread,scale,param['TESTDB'],start.rstrip(),tps,trans  )] )
 
 
 	for f in glob.glob('*_log*') :

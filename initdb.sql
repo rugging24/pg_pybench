@@ -6,13 +6,21 @@ CREATE TABLE testset(
   info text
   );
 
+DROP TABLE IF EXISTS load_average ;
+CREATE TABLE IF NOT EXISTS load_average(
+	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,
+	load_1min numeric,
+	load_5min numeric, 
+	load_15min numeric
+);
+
 DROP TABLE IF EXISTS tests;
 CREATE TABLE tests(
   test serial PRIMARY KEY,
   set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,
   scale int,
   dbsize int8,
-  start_time timestamp default now(),
+  start_time timestamp , -- default now(),
   end_time timestamp default null,
   tps decimal default 0,
   script text,
