@@ -9,6 +9,7 @@ CREATE TABLE testset(
 DROP TABLE IF EXISTS load_average ;
 CREATE TABLE IF NOT EXISTS load_average(
 	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,
+	repeat_number integer ,
 	load_1min numeric,
 	load_5min numeric, 
 	load_15min numeric
