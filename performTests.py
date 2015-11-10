@@ -3,6 +3,7 @@
 import utilfunc as uf
 import subprocess
 import glob,datetime
+import os_metrics as mets
 
 def runBenchwarmer (repeat,scale,client,script,param) : 
 #	pgbench -t 1000 -T 6000 -M simple -l -j 4 -c 50 dbname
@@ -11,23 +12,40 @@ def runBenchwarmer (repeat,scale,client,script,param) :
 	trans = param['TRANSACTIONS']
 	thread = param['THREADCOUNT']
 	db = param['TESTDB']
+	
+	# this will throw a huge error if thread is not a multiple of client, so we try to normilize that
+	if int(client) % int(thread) != 0 : 
+		client = str( int(thread) * ( int(client) / int(thread) ) )
 
 	out = ''
 
-	start  = str(datetime.datetime.now())
+	start_time  = str(datetime.datetime.now())  # might be a few milli or micro sec off, but it won't influence the results.
+	end_time = ''
 
-
+	# start saving the cpu load 
+	cpu_load = subprocess.Popen( [ 'python','cpu_load.py','--test',str(repeat) ] , stdout=subprocess.PIPE )
 	if runtime != '' and runtime != None :
-		out = subprocess.check_output(uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
-	 	thread,'-c',client,'-l','-s',str(scale),db])
+		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
+	 	thread,'-c',client,'-l','-s',str(scale),db] )
+
+		end_time = str(datetime.datetime.now())
 	elif trans != '' and trans != None and ( runtime == '' or runtime == None ) :
-		out = subprocess.check_output(uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-t',trans,'-j',\
-                thread,'-c',client,'-l','-s',str(scale),db])
+		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-t',trans,'-j',\
+                thread,'-c',client,'-l','-s',str(scale),db] )
+		
+		end_time = str(datetime.datetime.now())
 
 	else :
 		print ("Either the runtime or transaction/client must be specified ...")
+		cpu_load.stdout.close()
+        	cpu_load.terminate()
 		sys.exit(1)
 
+
+	cpu_load.stdout.close()
+	cpu_load.terminate()
+
+	
 	f = open('result.txt','wb')
 	f.write(out)
 	f.close()
@@ -41,12 +59,12 @@ def runBenchwarmer (repeat,scale,client,script,param) :
 		if lines.startswith('number of transactions actually processed:') == True :
 			trans = lines.split()[-1]
 		elif lines.endswith('(including connections establishing)\n') == True :
-			cols = lines.split()
-			tps = cols[2]
+			tps = lines.split()[2]
+
 	r.close()
 		
 	test = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',\
-               uf.insertTestResult( script,client,thread,scale,param['TESTDB'],start.rstrip(),tps,trans  )] )
+               uf.insertTestResult( script,client,thread,scale,param['TESTDB'],start_time.rstrip(),end_time.rstrip(),tps,trans  )] )
 
 
 	for f in glob.glob('*_log*') :

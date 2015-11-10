@@ -73,10 +73,10 @@ def storeTestLatency(test) :
 def copyTimingCSV(basedir) :
 	return " copy timing from '{0:s}' with csv ".format(basedir + '/timing.csv')
 
-def insertTestResult(script,client,thread,scale,testdb,start,tps,trans) :
+def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
 	return "insert into tests(script,clients,workers,set,scale,dbsize,start_time,end_time,tps,trans) \
-                select '{0:s}','{1:s}','{2:s}',max(set),'{3:s}',pg_database_size('{4:s}'),'{5:s}',now(),{6:s},{7:s} from testset"\
-                " returning test".format( script,str(client),str(thread),str(scale),testdb,str(start.rstrip()),str(tps),str(trans)  )
+                select '{0:s}','{1:s}','{2:s}',max(set),'{3:s}',pg_database_size('{4:s}'),'{5:s}','{6:s}',{7:s},{8:s} from testset"\
+                " returning test".format( script,str(client),str(thread),str(scale),testdb,str(start.rstrip()),str(end.rstrip()),str(tps),str(trans)  )
 
 def getPGVersion():
 	return "select substring(version() from '(\d\.\d)')"
@@ -182,7 +182,7 @@ def getConfParameters(switches):
                 print ('Exiting, gnuplot not found in ... this is required for the plots' )
                 os._exit(1)
         elif len(param['CLIENTS'].split()) == 0 :
-                param['CLIENTS'] = 5
+                param['CLIENTS'] = 20
         elif  param['REPEATTIME'] == '' or param['REPEATTIME'] == None :
                 param['REPEATTIME'] = 3
 

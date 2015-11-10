@@ -18,7 +18,6 @@ def runMainTest() :
 			subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-f','initdb.sql',param['RESULTDB']])		
 		
 		scales = uf.getLevelScale()
-		print (scales)
 		for key in scales.keys() :
 			out = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',uf.getPGVersion()])
 			if param['INITDB'] == '0' :
