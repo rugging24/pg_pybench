@@ -22,9 +22,8 @@ def runBenchwarmer (repeat,scale,client,script,param) :
 	start_time  = str(datetime.datetime.now())  # might be a few milli or micro sec off, but it won't influence the results.
 	end_time = ''
 
-	cpu_load = open('','wb')
-
-	cpu_load_proc = subprocess.Popen( [ mets.getLoadAverage(5) ] , stdout=subprocess.PIPE,stderr=subprocess.PIPE )
+	# start saving the cpu load 
+	cpu_load = subprocess.Popen( [ 'python','cpu_load.py','--test',str(repeat) ] , stdout=subprocess.PIPE )
 	if runtime != '' and runtime != None :
 		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
 	 	thread,'-c',client,'-l','-s',str(scale),db] )
@@ -38,8 +37,13 @@ def runBenchwarmer (repeat,scale,client,script,param) :
 
 	else :
 		print ("Either the runtime or transaction/client must be specified ...")
+		cpu_load.stdout.close()
+        	cpu_load.terminate()
 		sys.exit(1)
 
+
+	cpu_load.stdout.close()
+	cpu_load.terminate()
 
 	
 	f = open('result.txt','wb')
