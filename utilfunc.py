@@ -41,22 +41,26 @@ def writeCSV(fileName,test) :
 	fo.close()
 
 
-def getLevelScale() :
+def getLevelScale(testType) :
 	# this runs the test on 3 different levels
 	# 1 - in buffer, 
 	# 2 - mostly in cache, and 
 	# 3 - all on disk
 
-	mem = psutil.virtual_memory()
-	RAM = math.ceil(mem.total/float(1024*1024*1024))	
-	# set the scale 
-	ration = [0.1,0.9,4.0]
-	titles = ['In Buffer','Mostly in Cache', 'All on disk']
 	SCALES = {}
-	i = 0
-	for r in ration :
-		SCALES[titles[i]] = int(math.ceil((float(68) * float(r) * float(RAM))))
-		i += 1
+	if testType != 'custom' :
+		mem = psutil.virtual_memory()
+		RAM = math.ceil(mem.total/float(1024*1024*1024))	
+		# set the scale 
+		ration = [0.1] #,0.9,4.0]
+		titles = ['In Buffer'] #,'Mostly in Cache', 'All on disk']
+		i = 0
+		for r in ration :
+			SCALES[titles[i]] = int(math.ceil((float(68) * float(r) * float(RAM))))
+			i += 1
+	elif testType == 'custom' :
+		# Scale will always be 1 for a custom test
+		SCALES = {'custom file' : 1 }
 
 	return  SCALES
 
@@ -78,8 +82,6 @@ def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
                 select '{0:s}','{1:s}','{2:s}',max(set),'{3:s}',pg_database_size('{4:s}'),'{5:s}','{6:s}',{7:s},{8:s} from testset"\
                 " returning test".format( script,str(client),str(thread),str(scale),testdb,str(start.rstrip()),str(end.rstrip()),str(tps),str(trans)  )
 
-def getPGVersion():
-	return "select substring(version() from '(\d\.\d)')"
 
 def createResultDb(dbname) :
 	return 'CREATE DATABASE {0:s}'.format(dbname)
@@ -89,8 +91,22 @@ def checkResultDb(resultdb) :
 
 def insertNewTest(testname) :
 	testname = testname + ' - ' + str(datetime.datetime.now())
-	return	"insert into testset(set,info) select coalesce(max(set),0) + 1,'{0:s}' from testset".format(testname) 
+	return	"insert into testset(set,info) select coalesce(max(set),0) + 1,'{0:s}' from testset returning set".format(testname) 
+
+def getDBVersion() :
+	pgversion = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
+	"select substring(version() from '(\d\.\d)')"])	
+
+	return pgversion
+
+
+
+def getTablespaceLocation(p_spcname) : 
+	tbsLocation = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
+        "select coalesce(nullif(pg_tablespace_location(oid),''),current_setting('data_directory') )\
+        from pg_tablespace where spcname = {0:s}".format(p_spcname)])
 	
+	return tbsLocation
 
 def houseKeeping() :
         return 'drop table if exists pgbench_accounts cascade;  \
@@ -173,6 +189,7 @@ def getConfParameters(switches):
         param['QUERYMODE'] = qmode if qmode in ('simple','prepared','extended')  else 'simple'
 	param['TESTTYPE'] = t_type if t_type in ('read','write','update','all','custom')  else 'all'
         param['CUSTOMFILE'] = custom
+	
 	
 
         if param['PGBENCH'] == None :
