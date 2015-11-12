@@ -5,7 +5,7 @@ import subprocess
 import glob,datetime
 import os_metrics as mets
 
-def runBenchwarmer (repeat,scale,client,script,param) : 
+def runBenchwarmer (testset,repeat,scale,client,script,param) : 
 #	pgbench -t 1000 -T 6000 -M simple -l -j 4 -c 50 dbname
 	queryMode = param['QUERYMODE']
 	runtime = param['RUNTIME']
@@ -23,7 +23,8 @@ def runBenchwarmer (repeat,scale,client,script,param) :
 	end_time = ''
 
 	# start saving the cpu load 
-	cpu_load = subprocess.Popen( [ 'python','cpu_load.py','--test',str(repeat) ] , stdout=subprocess.PIPE )
+	cpu_load = subprocess.Popen( [ 'python','cpu_load.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ] \
+                   , stdout=subprocess.PIPE )
 	if runtime != '' and runtime != None :
 		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
 	 	thread,'-c',client,'-l','-s',str(scale),db] )

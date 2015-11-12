@@ -3,6 +3,7 @@ BEGIN;
 DROP TABLE IF EXISTS testset;
 CREATE TABLE testset(
   set serial PRIMARY KEY,
+  config_info text not null,
   info text
   );
 
@@ -10,6 +11,7 @@ DROP TABLE IF EXISTS load_average ;
 CREATE TABLE IF NOT EXISTS load_average(
 	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,
 	repeat_number integer ,
+	scale integer,
 	load_1min numeric,
 	load_5min numeric, 
 	load_15min numeric
