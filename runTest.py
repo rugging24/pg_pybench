@@ -11,6 +11,8 @@ def runMainTest() :
 	
 	if len(param) > 0 :
 		pgversion = getDBVersion()
+		tbsLocation = getTablespaceLocation(param['TESTTABLESPACE']) 
+
 		script = tests.formulateTestQuery(param['TESTTYPE']) if param['TESTTYPE'] != 'custom' else param['CUSTOMFILE']
 		resultDBExists = subprocess.call(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',uf.checkResultDb(param['RESULTDB'])])
 

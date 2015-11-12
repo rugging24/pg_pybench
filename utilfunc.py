@@ -105,7 +105,6 @@ def getTablespaceLocation(p_spcname) :
 	tbsLocation = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
         "select coalesce(nullif(pg_tablespace_location(oid),''),current_setting('data_directory') )\
         from pg_tablespace where spcname = {0:s}".format(p_spcname)])
-	
 	return tbsLocation
 
 def houseKeeping() :
