@@ -89,9 +89,23 @@ def createResultDb(dbname) :
 def checkResultDb(resultdb) :
 	return "select coalesce(datname,null) from pg_stat_database where datname = '{0:s}'".format(resultdb)
 
-def insertNewTest(testname) :
-	testname = testname + ' - ' + str(datetime.datetime.now())
-	return	"insert into testset(set,info) select coalesce(max(set),0) + 1,'{0:s}' from testset returning set".format(testname) 
+
+def getSysInfo() :
+	return "select current_setting('shared_buffers') , current_setting('checkpoint_segments') , current_setting('checkpoint_completion_target')"
+
+def insertNewTest(sysinfo,tbsLocation) :
+	props = '{\n'
+	keys = ['shared_buffers','checkpoint_segments','checkpoint_completion_target']
+	i = 0 
+	
+	for p in sysinfo.split('|') :
+		props = props + keys[i] + ':' + p + ','   
+		i += 1
+
+	props = props + '}'
+
+	comment= 'Test performed at {0:s} with the sys parameters stated in the config_info column - '.format( str(datetime.datetime.now()) )
+	return	"insert into testset(set,config_info,info) select coalesce(max(set),0) + 1,'{0:s}','{1:s}' from testset returning set".format(str(props),comment) 
 
 def getDBVersion() :
 	pgversion = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
@@ -101,10 +115,15 @@ def getDBVersion() :
 
 
 
-def getTablespaceLocation(p_spcname) : 
-	tbsLocation = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
-        "select coalesce(nullif(pg_tablespace_location(oid),''),current_setting('data_directory') )\
-        from pg_tablespace where spcname = {0:s}".format(p_spcname)])
+def getTablespaceLocation(pgversion,p_spcname) :
+	query = ''
+	if int(pgversion) >= 9.2 :
+		query = "SELECT coalesce(nullif(pg_tablespace_location(oid),''),current_setting('data_directory') )\
+                        FROM pg_tablespace WHERE spcname = '{0:s}'"
+	else :
+		query = "SELECT coalesce(nullif(spclocation,''),current_setting('data_directory') ) \
+                	FROM pg_tablespace WHERE spcname = {0:s}"
+	tbsLocation = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',query.format(p_spcname)])
 	return tbsLocation
 
 def houseKeeping() :

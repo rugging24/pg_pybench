@@ -11,7 +11,7 @@ def runMainTest() :
 	
 	if len(param) > 0 :
 		pgversion = getDBVersion()
-		tbsLocation = getTablespaceLocation(param['TESTTABLESPACE']) 
+		tbsLocation = getTablespaceLocation(pgversion,param['TESTTABLESPACE']) 
 
 		script = tests.formulateTestQuery(param['TESTTYPE']) if param['TESTTYPE'] != 'custom' else param['CUSTOMFILE']
 		resultDBExists = subprocess.call(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',uf.checkResultDb(param['RESULTDB'])])
@@ -21,7 +21,8 @@ def runMainTest() :
 			subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-f','initdb.sql',param['RESULTDB']])		
 
 		# create the main test entry 
-		testset = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-c',uf.insertNewTest(key)] )
+		sysinfo = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',uf.getSysInfo()] )
+		testset = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-c',uf.insertNewTest(sysinfo,tbsLocation)] )
 
 		# if a custom script is used, set scale to 1
 		scales = uf.getLevelScale(param['TESTTYPE'])

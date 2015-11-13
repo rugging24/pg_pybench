@@ -62,7 +62,6 @@ CREATE TABLE test_bgwriter(
   buffers_backend_fsync bigint,
   max_dirty bigint
 );
-
 --
 -- Convert hex value to a decimal one.  It's possible to do this using
 -- undocumented features of the bit type, such as:
