@@ -3,7 +3,6 @@
 import utilfunc as uf
 import subprocess
 import glob,datetime
-import os_metrics as mets
 
 def runBenchwarmer (testset,repeat,scale,client,script,param) : 
 #	pgbench -t 1000 -T 6000 -M simple -l -j 4 -c 50 dbname
@@ -25,6 +24,8 @@ def runBenchwarmer (testset,repeat,scale,client,script,param) :
 	# start saving the cpu load 
 	cpu_load = subprocess.Popen( [ 'python','cpu_load.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ] \
                    , stdout=subprocess.PIPE )
+	io_count = subprocess.Popen( [ 'python','io_count.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ] \
+                   , stdout=subprocess.PIPE )
 	if runtime != '' and runtime != None :
 		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
 	 	thread,'-c',client,'-l','-s',str(scale),db] )
@@ -40,12 +41,15 @@ def runBenchwarmer (testset,repeat,scale,client,script,param) :
 		print ("Either the runtime or transaction/client must be specified ...")
 		cpu_load.stdout.close()
         	cpu_load.terminate()
+		io_count.stdout.close()
+                io_count.terminate()
 		sys.exit(1)
 
 
 	cpu_load.stdout.close()
 	cpu_load.terminate()
-
+	io_count.stdout.close()
+        io_count.terminate()
 	
 	f = open('result.txt','wb')
 	f.write(out)

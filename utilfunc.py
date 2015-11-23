@@ -102,6 +102,7 @@ def insertNewTest(sysinfo,tbsLocation) :
 		props = props + keys[i] + ':' + p + ','   
 		i += 1
 
+	props = props + 'data_dir :' + tbsLocation 
 	props = props + '}'
 
 	comment= 'Test performed at {0:s} with the sys parameters stated in the config_info column - '.format( str(datetime.datetime.now()) )
@@ -110,21 +111,13 @@ def insertNewTest(sysinfo,tbsLocation) :
 def getDBVersion() :
 	pgversion = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
 	"select substring(version() from '(\d\.\d)')"])	
-
 	return pgversion
 
 
-
-def getTablespaceLocation(pgversion,p_spcname) :
-	query = ''
-	if int(pgversion) >= 9.2 :
-		query = "SELECT coalesce(nullif(pg_tablespace_location(oid),''),current_setting('data_directory') )\
-                        FROM pg_tablespace WHERE spcname = '{0:s}'"
-	else :
-		query = "SELECT coalesce(nullif(spclocation,''),current_setting('data_directory') ) \
-                	FROM pg_tablespace WHERE spcname = {0:s}"
-	tbsLocation = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',query.format(p_spcname)])
-	return tbsLocation
+def getCurrentDBSetting(setting_name) :
+	query = "select current_setting('{0:s}')".format(str(setting_name))
+	dbsetting = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',query])
+	return dbsetting
 
 def houseKeeping() :
         return 'drop table if exists pgbench_accounts cascade;  \
@@ -139,6 +132,13 @@ def getProg(name):
                 if os.path.exists(full_path) :
                         prog = full_path
         return prog
+
+def checkModuleInstall(moduleName) :
+	try :
+		imp.find_module(moduleName)
+	except ImportError :
+		print ('The module {0:s} is required. Please contact your Administrator for installation help'.format(moduleName))	
+		sys.exit(0)
 
 
 def utilfunc(dest,prog,param) :
@@ -160,6 +160,10 @@ def getConfParameters(switches):
         level = None
         qmode = None
 	
+	# checking for reuired modules before going ahead with the rest of the program
+	required = ['psutil','configobj','pyudev']
+	for modl in required :
+		checkModuleInstall(modl)	 
 
         try :
                 opts,args = getopt.getopt(switches[1:],'f:c:t:h',["conf=","help","query-mode=","test-type=","level=","file="])

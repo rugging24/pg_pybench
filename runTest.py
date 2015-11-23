@@ -10,8 +10,8 @@ def runMainTest() :
 	param = uf.getConfParameters(sys.argv)
 	
 	if len(param) > 0 :
-		pgversion = getDBVersion()
-		tbsLocation = getTablespaceLocation(pgversion,param['TESTTABLESPACE']) 
+		pgversion = uf.getDBVersion()
+		dataDirLocation = uf.getCurrentDBSetting('data_directory') 
 
 		script = tests.formulateTestQuery(param['TESTTYPE']) if param['TESTTYPE'] != 'custom' else param['CUSTOMFILE']
 		resultDBExists = subprocess.call(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',uf.checkResultDb(param['RESULTDB'])])
@@ -22,7 +22,7 @@ def runMainTest() :
 
 		# create the main test entry 
 		sysinfo = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',uf.getSysInfo()] )
-		testset = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-c',uf.insertNewTest(sysinfo,tbsLocation)] )
+		testset = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-c',uf.insertNewTest(sysinfo,dataDirLocation)] )
 
 		# if a custom script is used, set scale to 1
 		scales = uf.getLevelScale(param['TESTTYPE'])
@@ -54,6 +54,7 @@ def runMainTest() :
 		tests.deleteFiles('result.txt')
 		tests.deleteFiles('*_log*')
 		tests.deleteFiles('load.csv')
+		tests.deleteFiles('disk_io_count.csv')
 			## here is where you chart ur results
 
 
