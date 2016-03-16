@@ -29,7 +29,23 @@ def runBenchmark() :
         parser.add_argument ( '--resultuser', type=str , default='postgres' ,help='User of the result database')
         parser.add_argument ( '--resultport', type=str , default='5432' ,help='Port of the result database')
         parser.add_argument ( '--resultdbname', type=str , default='result_db' ,help='Name of the result database')
-	
+
+	param = {}
+	args = parser.parse_args()
+	param['initdb'] = args.initdb
+	param['transaction'] = str(args.transactions).split(',')
+	param['clients'] = str(args.clients).split(',')
+	param['repeattime'] = args.repeattime
+	param['runtime'] = args.runtime
+	param['threadcount'] = args.threadcount
+	param['testhost'] = args.testhost
+	param['testuser'] = args.testuser
+	param['testport'] = args.testport
+	param['testdbname'] = args.testdbname
+	param['resulthost'] = args.resulthost
+	param['resultuser'] = args.resultuser
+	param['resultport'] = args.resultport
+	param['resultdbname'] = args.resultdbname
 
 
 if __name__ == '__main__' :
