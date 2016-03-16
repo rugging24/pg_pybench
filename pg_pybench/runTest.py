@@ -6,12 +6,10 @@ import performTests as bw
 import formTestQuery as tests
 
 
-def runMainTest() :
-	param = uf.getConfParameters(sys.argv)
-	
+def runMainTest(param) :
 	if len(param) > 0 :
-		pgversion = uf.getDBVersion()
-		dataDirLocation = uf.getCurrentDBSetting('data_directory') 
+		pgversion = uf.getDBVersion(param)
+		dataDirLocation = uf.getCurrentDBSetting(param,'data_directory') 
 
 		script = tests.formulateTestQuery(param['TESTTYPE']) if param['TESTTYPE'] != 'custom' else param['CUSTOMFILE']
 		resultDBExists = subprocess.call(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',uf.checkResultDb(param['RESULTDB'])])

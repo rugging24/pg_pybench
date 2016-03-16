@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import os 
+import os,sys 
 #import pg_pybench
 import argparse 
 
@@ -11,6 +11,8 @@ import argparse
 
 # See https://wiki.postgresql.org/wiki/Pgbenchtesting for more details  :) 
 
+
+#os.path.dirname(os.path.realpath(sys.argv[0]))
 
 def runBenchmark() :
 	parser = argparse.ArgumentParser(prog='pg_pybench' ,description = 'Runs PostgreSQL Database Benchmark')
@@ -29,23 +31,34 @@ def runBenchmark() :
         parser.add_argument ( '--resultuser', type=str , default='postgres' ,help='User of the result database')
         parser.add_argument ( '--resultport', type=str , default='5432' ,help='Port of the result database')
         parser.add_argument ( '--resultdbname', type=str , default='result_db' ,help='Name of the result database')
+	parser.add_argument ( '--querymode', type=str , default='simple' ,choices=['simple', 'prepared', 'extended'] ,help='Specifies the query mode to be used')
+	parser.add_argument ( '--testtype', type=str , default='all' ,choices=['read','write','update','all','custom'] ,help='Type of test to perform')
+	parser.add_argument ( '--customfile', type=str , default=''  ,help='Path (absolute/relative) to the custom sql file')
 
 	param = {}
 	args = parser.parse_args()
-	param['initdb'] = args.initdb
-	param['transaction'] = str(args.transactions).split(',')
-	param['clients'] = str(args.clients).split(',')
-	param['repeattime'] = args.repeattime
-	param['runtime'] = args.runtime
-	param['threadcount'] = args.threadcount
-	param['testhost'] = args.testhost
-	param['testuser'] = args.testuser
-	param['testport'] = args.testport
-	param['testdbname'] = args.testdbname
-	param['resulthost'] = args.resulthost
-	param['resultuser'] = args.resultuser
-	param['resultport'] = args.resultport
-	param['resultdbname'] = args.resultdbname
+	if args.customfile != '' and os.path.isfile(args.customfile) == True and str(args.customfile).find('.sql') != -1 :
+		param['initdb'] = args.initdb
+		param['transaction'] = str(args.transactions).split(',')
+		param['clients'] = str(args.clients).split(',')
+		param['repeattime'] = args.repeattime
+		param['runtime'] = args.runtime
+		param['threadcount'] = args.threadcount
+		param['testhost'] = args.testhost
+		param['testuser'] = args.testuser
+		param['testport'] = args.testport
+		param['testdbname'] = args.testdbname
+		param['resulthost'] = args.resulthost
+		param['resultuser'] = args.resultuser
+		param['resultport'] = args.resultport
+		param['resultdbname'] = args.resultdbname
+		param['querymode'] = args.querymode 
+		param['testtype'] = args.testtype
+		param['customfile'] = args.customfile
+	else :
+		print ('Invalid custom file format provided or an incorrect path to the custom file was supplied')
+		sys.exit(0)
+
 
 
 if __name__ == '__main__' :

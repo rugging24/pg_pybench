@@ -1,28 +1,15 @@
 #!/usr/bin/python
 
 from __future__ import print_function
-from configobj import ConfigObj
-import getopt
 import sys,os
 import subprocess
 import psutil
 import math
 import csv,datetime
 import logging
+import executeSql as sql
 
-
-
-def usage() :
-	print ( ' python runTest.py [options] \n'\
-		'Options : \n' \
-		'-h,--help			displays the help options\n'\
-		'-c ,--conf			used to pass the configuration file to the script\n'\
-		'--query-mode			for passing the query mode [simple|extended|prepared] default is simple \n'\
-		'-t,--test-type			accpets values read|write|update|all|custom \n'\
-		'				use the custom value only if you are providing a custom sql file and are probably\n'\
-	  	'				not using the pgbench default data set\n'\
-		'-f,--file			the full path (with extension, usually .sql) of the custom sql file \n' )
-
+# programs needed - psql, pgbench , gnuplot
 
 def writeCSV(fileName,test) :
 	f = open(fileName,'r')
@@ -36,7 +23,6 @@ def writeCSV(fileName,test) :
 		r=[d.isoformat(" "),filenum,latency,test]
 		of.writerow(r)
 		#print (line.split())
-
 	f.close()
 	fo.close()
 
@@ -48,7 +34,7 @@ def getLevelScale(testType) :
 	# 3 - all on disk
 
 	SCALES = {}
-	if testType != 'custom' :
+	if str(testType).lower() != 'custom' :
 		mem = psutil.virtual_memory()
 		RAM = math.ceil(mem.total/float(1024*1024*1024))	
 		# set the scale 
@@ -58,7 +44,7 @@ def getLevelScale(testType) :
 		for r in ration :
 			SCALES[titles[i]] = int(math.ceil((float(68) * float(r) * float(RAM))))
 			i += 1
-	elif testType == 'custom' :
+	elif str(testType).lower() == 'custom' :
 		# Scale will always be 1 for a custom test
 		SCALES = {'custom file' : 1 }
 
@@ -108,15 +94,13 @@ def insertNewTest(sysinfo,tbsLocation) :
 	comment= 'Test performed at {0:s} with the sys parameters stated in the config_info column - '.format( str(datetime.datetime.now()) )
 	return	"insert into testset(set,config_info,info) select coalesce(max(set),0) + 1,'{0:s}','{1:s}' from testset returning set".format(str(props),comment) 
 
-def getDBVersion() :
-	pgversion = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',\
-	"select substring(version() from '(\d\.\d)')"])	
+def getDBVersion(param) :
+	pgversion = sql.queryDB (param,"select substring(version() from '(\d\.\d)')","read")[1][0]	
 	return pgversion
 
 
-def getCurrentDBSetting(setting_name) :
-	query = "select current_setting('{0:s}')".format(str(setting_name))
-	dbsetting = subprocess.check_output(uf.utilfunc('testdb','PSQL',param) + ['-tAc',query])
+def getCurrentDBSetting(param,setting_name) :
+	dbsetting = sql.queryDB (param,"select current_setting('{0:s}')".format(str(setting_name)),"read")[1][0]
 	return dbsetting
 
 def houseKeeping() :
@@ -151,80 +135,5 @@ def utilfunc(dest,prog,param) :
                 c_str = [ param[prog],'-h',param['RESULTHOST'],'-U',param['RESULTUSER'],'-p',param['RESULTPORT'],'postgres']
 
         return c_str
-
-
-
-def getConfParameters(switches):
-        conf = None
-        custom = None
-        level = None
-        qmode = None
-	
-	# checking for reuired modules before going ahead with the rest of the program
-	required = ['psutil','configobj','pyudev']
-	for modl in required :
-		checkModuleInstall(modl)	 
-
-        try :
-                opts,args = getopt.getopt(switches[1:],'f:c:t:h',["conf=","help","query-mode=","test-type=","level=","file="])
-
-		if len(opts) == 0 :
-			usage()
-
-                for opt,arg in opts :
-                        if opt in ('-h','--help') :
-				usage()
-                                sys.exit(0)
-                        elif opt in ('-c','--conf') :
-                                conf = arg
-                        elif opt in ('-f', '--file') :
-                                custom = arg
-                                if os.path.exists(custom) == False or custom.endswith('.sql') == False :
-                                        print ("Specified custom file does not exist or its not a valid sql file... Aborting...")
-                                        sys.exit(1)
-                        elif opt == '--level' :
-                                level = arg
-                        elif opt == '--query-mode' :
-                                qmode = arg
-			elif opt in ('-t','--test-type') :
-				t_type = arg
-
-        except getopt.GetoptError as err :
-		print (err)
-		usage()
-
-        param = {}
-        config = ConfigObj(conf)
-        for vals in config.values() :
-                param.update(vals)
-
-        param['BASEDIR'] = os.path.dirname(os.path.realpath(sys.argv[0]))
-        param['PGBENCH'] = getProg("pgbench")
-	param['PSQL'] = getProg("psql")
-        param['GNUPLOT'] = getProg("gnuplot")
-        param['RESULTHOST'] = param['RESULTHOST'] if param['RESULTHOST'] != '' else param['TESTHOST']
-        param['RESULTUSER'] = param['RESULTUSER'] if param['RESULTUSER'] != '' else param['TESTUSER']
-        param['RESULTPORT'] = param['RESULTPORT'] if param['RESULTPORT'] != '' else param['TESTPORT']
-        param['RESULTDB'] = param['RESULTDB'] if param['RESULTDB'] != '' else param['TESTDB']
-        param['TRANSACTIONS'] = param['TRANSACTIONS'] if param['TRANSACTIONS'] != '' else 1000
-	param['RUNTIME'] = param['RUNTIME'] if param['RUNTIME'] != '' or param['RUNTIME'] != None else 600
-        param['QUERYMODE'] = qmode if qmode in ('simple','prepared','extended')  else 'simple'
-	param['TESTTYPE'] = t_type if t_type in ('read','write','update','all','custom')  else 'all'
-        param['CUSTOMFILE'] = custom
-	
-	
-
-        if param['PGBENCH'] == None :
-                print ("Exiting, pgbench not found .... install and try again...")
-                sys.exit(2)
-        elif param['GNUPLOT'] == False :
-                print ('Exiting, gnuplot not found in ... this is required for the plots' )
-                os._exit(1)
-        elif len(param['CLIENTS'].split()) == 0 :
-                param['CLIENTS'] = 20
-        elif  param['REPEATTIME'] == '' or param['REPEATTIME'] == None :
-                param['REPEATTIME'] = 3
-
-        return param
 
 
