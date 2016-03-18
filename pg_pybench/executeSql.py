@@ -19,7 +19,7 @@ def queryDB (dbParam,query,operation) :
 		if operation == 'read' :
 			rows = cur.fetchall()
 		else :
-			rows = 0
+			rows = (0,)
 
 		cur.close()
 		conn.close()

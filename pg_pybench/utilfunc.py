@@ -38,11 +38,11 @@ def getLevelScale(testType) :
 		mem = psutil.virtual_memory()
 		RAM = math.ceil(mem.total/float(1024*1024*1024))	
 		# set the scale 
-		ration = [0.1] #,0.9,4.0]
-		titles = ['In Buffer'] #,'Mostly in Cache', 'All on disk']
+		ratio = [0.1,0.9,4.0]
+		titles = ['In Buffer','Mostly in Cache', 'All on disk']
 		i = 0
-		for r in ration :
-			SCALES[titles[i]] = int(math.ceil((float(68) * float(r) * float(RAM))))
+		for r in ratio :
+			SCALES.update( "'" + titles[i]] + "'" : int(math.ceil((float(68) * float(r) * float(RAM)))) )
 			i += 1
 	elif str(testType).lower() == 'custom' :
 		# Scale will always be 1 for a custom test
@@ -69,27 +69,24 @@ def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
                 " returning test".format( script,str(client),str(thread),str(scale),testdb,str(start.rstrip()),str(end.rstrip()),str(tps),str(trans)  )
 
 
-def createResultDb(dbname) :
+def createDBText(dbname) :
 	return 'CREATE DATABASE {0:s}'.format(dbname)
 
-def checkResultDb(resultdb) :
-	return "select coalesce(datname,null) from pg_stat_database where datname = '{0:s}'".format(resultdb)
+def checkDBExist(dbname) :
+	return "select coalesce(datname,null) from pg_stat_database where datname = '{0:s}'".format(dbname)
 
 
 def getSysInfo() :
 	return "select current_setting('shared_buffers') , current_setting('checkpoint_segments') , current_setting('checkpoint_completion_target')"
 
 def insertNewTest(sysinfo,tbsLocation) :
-	props = '{\n'
+	props = {}
 	keys = ['shared_buffers','checkpoint_segments','checkpoint_completion_target']
 	i = 0 
 	
-	for p in sysinfo.split('|') :
-		props = props + keys[i] + ':' + p + ','   
+	for p in sysinfo :
+		props.update("'" + keys[i] + "'" : p )   
 		i += 1
-
-	props = props + 'data_dir :' + tbsLocation 
-	props = props + '}'
 
 	comment= 'Test performed at {0:s} with the sys parameters stated in the config_info column - '.format( str(datetime.datetime.now()) )
 	return	"insert into testset(set,config_info,info) select coalesce(max(set),0) + 1,'{0:s}','{1:s}' from testset returning set".format(str(props),comment) 
@@ -103,26 +100,19 @@ def getCurrentDBSetting(param,setting_name) :
 	dbsetting = sql.queryDB (param,"select current_setting('{0:s}')".format(str(setting_name)),"read")[1][0]
 	return dbsetting
 
-def houseKeeping() :
+def droppgBenchTables() :
         return 'drop table if exists pgbench_accounts cascade;  \
                 drop table if exists pgbench_branches cascade; \
                 drop table if exists pgbench_tellers cascade; \
                 drop table if exists pgbench_history cascade;'
 
-def getProg(name):
+def findProg(name):
         prog = None
         for path in os.getenv("PATH").split(os.path.pathsep):
                 full_path = path + os.sep + name
                 if os.path.exists(full_path) :
                         prog = full_path
         return prog
-
-def checkModuleInstall(moduleName) :
-	try :
-		imp.find_module(moduleName)
-	except ImportError :
-		print ('The module {0:s} is required. Please contact your Administrator for installation help'.format(moduleName))	
-		sys.exit(0)
 
 
 def utilfunc(dest,prog,param) :
