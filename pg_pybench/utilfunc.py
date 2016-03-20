@@ -70,7 +70,22 @@ def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
 
 
 def createDBText(dbname) :
-	return 'CREATE DATABASE {0:s}'.format(dbname)
+	return 'CREATE DATABASE {0:s} TABLESPACE = {1:s}'.format(dbname, getTableSpaceName())
+
+def dropDBText(dbname) :
+	return "DROP DATABASE IF EXISTS {0:s} ".format(dbname)
+
+def getTableSpaceName () :
+	return 'benchmark_test_tablespace'
+
+def createTableSpaceText(location) :
+	location = location + os.sep + getTableSpaceName()
+	os.mkdir(location )	
+	return "CREATE TABLESPACE {0:s} LOCATION '{1:s}' ".format(getTableSpaceName(), location)
+
+def dropTableSpaceText() :
+	return 'DROP TABLESPACE IF EXISTS {0:s}'.format(getTableSpaceName())
+
 
 def checkDBExist(dbname) :
 	return "select coalesce(datname,null) from pg_stat_database where datname = '{0:s}'".format(dbname)

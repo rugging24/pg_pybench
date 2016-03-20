@@ -3,14 +3,14 @@
 import utilfunc as uf
 import subprocess
 import glob,datetime
+import cpu_load as cpu
+import io_count as io
 
-def runBenchwarmer (testset,repeat,scale,client,script,param) : 
+def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,runtime) : 
 #	pgbench -t 1000 -T 6000 -M simple -l -j 4 -c 50 dbname
-	queryMode = param['QUERYMODE']
-	runtime = param['RUNTIME']
-	trans = param['TRANSACTIONS']
-	thread = param['THREADCOUNT']
-	db = param['TESTDB']
+	queryMode = param.get('querymode')
+	thread = param.get('threadcount')
+	db = param.get('testdbname')
 	
 	# this will throw a huge error if thread is not a multiple of client, so we try to normilize that
 	if int(client) % int(thread) != 0 : 
@@ -21,17 +21,16 @@ def runBenchwarmer (testset,repeat,scale,client,script,param) :
 	start_time  = str(datetime.datetime.now())  # might be a few milli or micro sec off, but it won't influence the results.
 	end_time = ''
 
-	# start saving the cpu load 
-	cpu_load = subprocess.Popen( [ 'python','cpu_load.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ] \
-                   , stdout=subprocess.PIPE )
-	io_count = subprocess.Popen( [ 'python','io_count.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ] \
-                   , stdout=subprocess.PIPE )
-	if runtime != '' and runtime != None :
+	# start saving the cpu load and the I/O count 
+	cpu_load = subprocess.Popen( [ cpu.(5,str(testset),str(repeat),str(scale)) ] , stdout=subprocess.PIPE )
+	io_count = subprocess.Popen( [ io.getIOCount(5, datadir, str(testset), str(repeat), str(scale)) ] , stdout=subprocess.PIPE )
+
+	if trans == None :
 		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
 	 	thread,'-c',client,'-l','-s',str(scale),db] )
 
 		end_time = str(datetime.datetime.now())
-	elif trans != '' and trans != None and ( runtime == '' or runtime == None ) :
+	elif  :
 		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-t',trans,'-j',\
                 thread,'-c',client,'-l','-s',str(scale),db] )
 		
