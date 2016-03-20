@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import csv,os,time
-import getopt
 
 #'python','cpu_load.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ]
 
@@ -11,7 +10,8 @@ def getCPULoad(delay,testset,repeat,scale) :
 		while True :
         		f = open('load.csv','ab')
         		cs = csv.writer(f,delimiter=',')
-        		load = str( str(testset) + ',' + sr(repeat) + ',' + str(scale) + ','+ str(os.getloadavg()).replace('(','').replace(')','') ).split(',')
+			cpu = os.getloadavg()
+        		load = str( str(testset) + ',' + str(repeat) + ',' + str(scale) + ',' + str(cpu[0]) + ',' + str(cpu[1]) + ',' + str(cpu[2])  )
         		cs.writerow(load)
 			f.close()
         		time.sleep(delay)
