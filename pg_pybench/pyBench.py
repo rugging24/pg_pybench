@@ -64,9 +64,9 @@ def runMainTest(param) :
 				sql.queryDB (testDBParam,'vacuum','write')
 				print ('Creating new pgbench tables')
 				if pgversion >= 9.4  :
-					subprocess.check_output(uf.utilfunc('testdb','PGBENCH',param) + ['-i','-s',str(scales.get(key)),'--foreign-keys'])
+					subprocess.check_output(uf.utilfunc('testdb','pgbench',param) + ['-i','-s',str(scales.get(key)),'--foreign-keys'])
 				else :
-					subprocess.check_output(uf.utilfunc('testdb','PGBENCH',param) + ['-i','-s',str(scales.get(key))])
+					subprocess.check_output(uf.utilfunc('testdb','pgbench',param) + ['-i','-s',str(scales.get(key))])
 
 				# running the main test
 

@@ -11,9 +11,6 @@ import argparse
 
 # See https://wiki.postgresql.org/wiki/Pgbenchtesting for more details  :) 
 
-
-#os.path.dirname(os.path.realpath(sys.argv[0]))
-
 def runBenchmark() :
 	parser = argparse.ArgumentParser(prog='pg_pybench' ,description = 'Runs PostgreSQL Database Benchmark')
 	parser.add_argument ( '--initdb', type=int , default=0 ,help='set to 1 if a custom script is to be used')
@@ -72,7 +69,4 @@ def runBenchmark() :
 
 if __name__ == '__main__' :
 	runBenchmark()
-
-# The test will be meaningless with a value less than 600 for each test set
-# i.e if client is set to 10 , and there are 4 cores on the system, you could use 2. => 10/2 is an integer
 

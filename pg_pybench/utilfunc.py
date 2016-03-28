@@ -133,11 +133,11 @@ def findProg(name):
 def utilfunc(dest,prog,param) :
         c_str = []
         if dest == 'resultdb':
-                c_str = [ param[prog],'-h',param['RESULTHOST'],'-U',param['RESULTUSER'],'-p',param['RESULTPORT'],param['RESULTDB']]
+                c_str = [ findProg(prog),'-h',param['resulthost'],'-U',param['resultuser'],'-p',param['resultport'],param['resultdbname']]
         elif dest == 'testdb' :
-                c_str = [ param[prog],'-h',param['TESTHOST'],'-U',param['TESTUSER'],'-p',param['TESTPORT'],param['TESTDB']]
+                c_str = [ findProg(prog),'-h',param['testhost'],'-U',param['testuser'],'-p',param['testport'],param['testdbname']]
 	elif dest == 'createdb' :
-                c_str = [ param[prog],'-h',param['RESULTHOST'],'-U',param['RESULTUSER'],'-p',param['RESULTPORT'],'postgres']
+                c_str = [ findProg(prog) ,'-h',param['resulthost'],'-U',param['resultuser'],'-p',param['resultport'],'postgres']
 
         return c_str
 

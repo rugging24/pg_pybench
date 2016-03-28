@@ -26,12 +26,12 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,
 	io_count = subprocess.Popen( [ io.getIOCount(5, datadir, str(testset), str(repeat), str(scale)) ] , stdout=subprocess.PIPE )
 
 	if trans == None :
-		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
+		out = subprocess.check_output( uf.utilfunc('testdb','pgbench',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
 	 	thread,'-c',client,'-l','-s',str(scale),db] )
 
 		end_time = str(datetime.datetime.now())
 	elif  :
-		out = subprocess.check_output( uf.utilfunc('testdb','PGBENCH',param) + ['-M',queryMode,'-f',script,'-t',trans,'-j',\
+		out = subprocess.check_output( uf.utilfunc('testdb','pgbench',param) + ['-M',queryMode,'-f',script,'-t',trans,'-j',\
                 thread,'-c',client,'-l','-s',str(scale),db] )
 		
 		end_time = str(datetime.datetime.now())
@@ -67,17 +67,17 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,
 
 	r.close()
 		
-	test = subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',\
-               uf.insertTestResult( script,client,thread,scale,param['TESTDB'],start_time.rstrip(),end_time.rstrip(),tps,trans  )] )
+	test = subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',\
+               uf.insertTestResult( script,client,thread,scale,param.get('testdbname'),start_time.rstrip(),end_time.rstrip(),tps,trans  )] )
 
 
 	for f in glob.glob('*_log*') :
                 uf.writeCSV(f,test.split("\n")[0])
 
-	subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-c',uf.copyTimingCSV(param['BASEDIR']) ] )
+	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyTimingCSV(param.get('pwd')) ] )
 
 	
-	subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-tAc',uf.storeTestLatency(test) ] )
+	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',uf.storeTestLatency(test) ] )
 
-	subprocess.check_output(uf.utilfunc('resultdb','PSQL',param) + ['-c',uf.truncateTiming() ] )
+	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.truncateTiming() ] )
 
