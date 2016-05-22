@@ -16,7 +16,7 @@ def readme():
         return f.read()
 
 setup(name='pg_pybench',
-      version='1.3',
+      version='1.4',
       description='PostgreSQL monitoring checks',
       long_description=readme(),
       classifiers=[
