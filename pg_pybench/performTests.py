@@ -74,12 +74,12 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,
 	for f in glob.glob('*_log*') :
                 uf.writeCSV(f,test.split("\n")[0])
 
-	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'timing.csv') ] )
-	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv') ] )
-	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv') ] )
+	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'timing.csv') ] )
+	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv') ] )
+	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv') ] )
 
 	
-	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',uf.storeTestLatency(test) ] )
+	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',uf.storeTestLatency(test) ] )
 
-	subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.truncateTiming() ] )
+	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.truncateTiming() ] )
 

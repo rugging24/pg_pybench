@@ -2,7 +2,6 @@
 
 from __future__ import print_function
 import sys,os
-import subprocess
 import psutil
 import math
 import csv,datetime
