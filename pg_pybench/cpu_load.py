@@ -2,20 +2,18 @@
 
 import csv,os,time
 
-#'python','cpu_load.py','--delay','5','--testset',str(testset),'--repeat',str(repeat),'--scale',str(scale) ]
-
 def getCPULoad(delay,testset,repeat,scale) :
 
 	try :
+		f = open('load.csv','ab')
+		cs = csv.writer(f,delimiter=';')
 		while True :
-        		f = open('load.csv','ab')
-        		cs = csv.writer(f,delimiter=',')
 			cpu = os.getloadavg()
-        		load = str( str(testset) + ',' + str(repeat) + ',' + str(scale) + ',' + str(cpu[0]) + ',' + str(cpu[1]) + ',' + str(cpu[2])  )
-        		cs.writerow(load)
-			f.close()
-        		time.sleep(delay)
+        		load = str(testset) + ';' + str(repeat) + ';' + str(scale) + ';' + str(cpu[0]) + ';' + str(cpu[1]) + ';' + str(cpu[2])  
+        		cs.writerow(load.split(';'))
+			time.sleep(delay)
 
+		f.close()
 	except Exception as err :
 		print (err) 
 		sys.exit(0) 

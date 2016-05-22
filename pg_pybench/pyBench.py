@@ -46,14 +46,13 @@ def runMainTest(param) :
 		testDBParam.update( 'dbname' : param.get('testdbname') )
 
 		pgversion = uf.getDBVersion(testDBParam)
+		dataDirLocation = tblspace
 		if tblspace == 'pg_default' :
 			dataDirLocation = uf.getCurrentDBSetting(testDBParam,'data_directory')
-		else :
-			dataDirLocation = tblspace
 
 		# create the main test entry
-		sysinfo = sql.queryDB (testDBParam,uf.getSysInfo(),'read')
-        	testset = sql.queryDB (resultDBParam,uf.insertNewTest(sysinfo,dataDirLocation),'read')
+		sysinfo = sql.queryDB (testDBParam,uf.getSysInfo(pgversion),'read')
+        	testset = sql.queryDB (resultDBParam,uf.insertNewTest(pgversion,sysinfo,dataDirLocation),'read')
 
 		# if a custom script is used, set scale to 1
         	scales = uf.getLevelScale( param.get('testtype') )
@@ -61,7 +60,7 @@ def runMainTest(param) :
 		for key in scales.keys() :
 			if param.get('initdb') == 0 :
 				sql.queryDB (testDBParam,uf.droppgBenchTables(),'write')
-				sql.queryDB (testDBParam,'vacuum','write')
+				sql.queryDB (testDBParam,'VACUUM FULL','write')
 				print ('Creating new pgbench tables')
 				if pgversion >= 9.4  :
 					subprocess.check_output(uf.utilfunc('testdb','pgbench',param) + ['-i','-s',str(scales.get(key)),'--foreign-keys'])

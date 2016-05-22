@@ -8,6 +8,7 @@ def getInitdbText() :
   	config_info text not null,\
   	info text\
   	);\
+	
 	DROP TABLE IF EXISTS load_average ;\
 	CREATE TABLE IF NOT EXISTS load_average(\
 	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,\
@@ -17,6 +18,19 @@ def getInitdbText() :
 	load_5min numeric, \
 	load_15min numeric\
 	);\
+
+	DROP TABLE IF EXISTS disk_io_count ; \
+	CREATE TABLE IF NOT EXISTS disk_io_count (\
+	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,\
+	repeat_number integer ,\
+	scale integer,\
+	write_count numeric, \
+	read_count numeric, \
+	read_bytes numeric, \
+	write_time numeric, \
+	read_time  numeric \
+	) ; \
+
 	DROP TABLE IF EXISTS tests;\
 	CREATE TABLE tests(\
   	test serial PRIMARY KEY,\

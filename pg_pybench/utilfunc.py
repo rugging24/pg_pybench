@@ -33,7 +33,7 @@ def getLevelScale(testType) :
 	# 2 - mostly in cache, and 
 	# 3 - all on disk
 
-	SCALES = {}
+	scales = {}
 	if str(testType).lower() != 'custom' :
 		mem = psutil.virtual_memory()
 		RAM = math.ceil(mem.total/float(1024*1024*1024))	
@@ -42,13 +42,13 @@ def getLevelScale(testType) :
 		titles = ['In Buffer','Mostly in Cache', 'All on disk']
 		i = 0
 		for r in ratio :
-			SCALES.update( "'" + titles[i]] + "'" : int(math.ceil((float(68) * float(r) * float(RAM)))) )
+			scales.update( "'" + titles[i]] + "'" : int(math.ceil((float(75) * float(r) * float(RAM)))) )
 			i += 1
 	elif str(testType).lower() == 'custom' :
 		# Scale will always be 1 for a custom test
-		SCALES = {'custom file' : 1 }
+		scales = {'custom file' : 1 }
 
-	return  SCALES
+	return  scales
 
 def truncateTiming() :
 	return " truncate table timing  "
@@ -60,8 +60,8 @@ def storeTestLatency(test) :
                  from timing where tests.test=timing.test \
                  order by latency offset (round(0.90*trans)) limit 1) where tests.test='{0:s}'".format(test.split("\n")[0]) 
 
-def copyTimingCSV(basedir) :
-	return " copy timing from '{0:s}' with csv ".format(basedir + '/timing.csv')
+def copyCSV(basedir,filename) :
+	return " \copy timing from '{0:s}' with csv ".format(basedir + '/' + filename)
 
 def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
 	return "insert into tests(script,clients,workers,set,scale,dbsize,start_time,end_time,tps,trans) \
@@ -91,12 +91,20 @@ def checkDBExist(dbname) :
 	return "select coalesce(datname,null) from pg_stat_database where datname = '{0:s}'".format(dbname)
 
 
-def getSysInfo() :
-	return "select current_setting('shared_buffers') , current_setting('checkpoint_segments') , current_setting('checkpoint_completion_target')"
+def getSysInfo(version) :
+	text = ''
+	if version <= 9.4 :
+		text = "select current_setting('shared_buffers') , current_setting('checkpoint_segments') , current_setting('checkpoint_completion_target')"
+	elif version >= 9.5 : 
+		text = "select current_setting('shared_buffers') , current_setting('max_wal_size') , current_setting('checkpoint_completion_target')"
+	return text 
 
-def insertNewTest(sysinfo,tbsLocation) :
+def insertNewTest(version,sysinfo,tbsLocation) :
 	props = {}
-	keys = ['shared_buffers','checkpoint_segments','checkpoint_completion_target']
+	if version <= 9.4 :
+		keys = ['shared_buffers','checkpoint_segments','checkpoint_completion_target']
+	elif version >= 9.5 :
+		keys = ['shared_buffers','max_wal_size','checkpoint_completion_target']
 	i = 0 
 	
 	for p in sysinfo :
