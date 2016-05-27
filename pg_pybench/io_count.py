@@ -54,4 +54,4 @@ if __name__ == '__main__' :
 	parser.add_argument ('--client', type=int, required=True)
 	parser.add_argument ('--thread', type=int, required=True)
         args = parser.parse_args()
-	getIOCount (args.delay, args.datadir, args.testset, args.repeat, args.scale,args.client)
+	getIOCount (args.delay, args.datadir, args.testset, args.repeat, args.scale,args.client,args.thread)

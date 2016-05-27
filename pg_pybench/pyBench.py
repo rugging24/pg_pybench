@@ -64,7 +64,6 @@ def runMainTest(param) :
 
 		for key in scales.keys() :
 			if param.get('initdb') == 0 :
-				print ("testing here")
 				sql.queryDB (testDBParam,uf.droppgBenchTables(),'write')
 				sql.queryDB (testDBParam,'VACUUM FULL','write')
 				print ('Creating new pgbench tables')
@@ -82,10 +81,6 @@ def runMainTest(param) :
 					for trans in param.get('transactions') :
 						testComponents(param.get('repeattime'), param.get('clients') , testset,scales.get(key),script,param,dataDirLocation,runtime,resultDBParam,threads,trans)
 				else :
-					print(testset) 
-					print (param.get('repeattime')) 
-					print (scales.get(key) )
-					print (runtime)
 					testComponents(param.get('repeattime'), param.get('clients') , testset,scales.get(key),script,param,dataDirLocation,runtime,resultDBParam,threads)
 						
 			else :
@@ -102,9 +97,9 @@ def runMainTest(param) :
 
 
 def testComponents(repeattime, clients , testset,scale,script,param,dataDirLocation,runtime,resultDBParam,threads,trans=None) :
-	for repeat in xrange(1,int(repeattime) + 1) :
-        	for client in clients :
-			for thread in threads :
+	for client in clients :
+		for thread in threads :
+			for repeat in xrange(1,int(repeattime) + 1) :	
                 		print("Running set {0:s} of {1:s} with {2:s} clients scale={3:s} and thread {4:s}".format(str(repeat), \
                         	str(repeattime),str(client),str(scale),str(thread) ))
                         	bw.runBenchwarmer(testset,repeat,scale,client,script,param,dataDirLocation,runtime,resultDBParam,thread,trans)

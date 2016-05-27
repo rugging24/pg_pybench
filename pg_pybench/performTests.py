@@ -67,8 +67,6 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,runtime,res
 
 	r.close()
 		
-	#test = subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',\
-              # uf.insertTestResult( script,client,thread,scale,param.get('testdbname'),start_time.rstrip(),end_time.rstrip(),tps,trans  )] )
 
 	test = sql.queryDB (resultDBParam,uf.insertTestResult( script,client,thread,scale,param.get('testdbname'),start_time.rstrip(),end_time.rstrip(),tps,trans  ),'read',1)
 

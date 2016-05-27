@@ -15,10 +15,10 @@ def runBenchmark() :
 	parser = argparse.ArgumentParser(prog='pg_pybench' ,description = 'Runs PostgreSQL Database Benchmark')
 	parser.add_argument ( '--initdb', type=int , default=0 ,help='set to 1 if a custom script is to be used')
 	parser.add_argument ( '--transactions', type=str , default=None ,nargs='?' ,help='Comma separated number of transactions per client')
-	parser.add_argument ( '--clients', type=str , default='2' ,nargs='?' ,help='Comma separated number of clients to connect to the database')
+	parser.add_argument ( '--clients', type=str , default='2,10,10,30,40,50,60,70,80,90,100,110,120,130' ,nargs='?' ,help='Comma separated number of clients to connect to the database')
 	parser.add_argument ( '--repeattime', type=int , default=3 ,help='Sets the number of times the benchmark process is to be repeated')
 	parser.add_argument ( '--runtime', type=int , default=60 ,help='Time in Seconds the benchmark should run. This and the --transactions parameter are mutually exclusive')
-	parser.add_argument ( '--threadcount', type=int , default=1,2 , nargs='?' ,help='Number of processor to be used in the benchmark for concurrent connections.\
+	parser.add_argument ( '--threadcount', type=str , default="1,2" , nargs='?' ,help='Number of processor to be used in the benchmark for concurrent connections.\
 			      ensure the number of clients is a multiple of the threadcount otherwise , the script will exit.')
 	parser.add_argument ( '--testhost', type=str , default='localhost' ,help='Host of the test database')
 	parser.add_argument ( '--testuser', type=str , default='postgres' ,help='User of the test database')
