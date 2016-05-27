@@ -5,11 +5,12 @@ import psutil
 import pyudev
 import csv
 import time
+import argparse
 
 
-def getIOCount (delay, datadir, testset, repeat, scale) :
-	if dataDir != '' and testset != '' and repeat != '' and scale != '' :
-        	deviceNumber = os.stat(dataDir).st_dev
+def getIOCount (delay, datadir, testset, repeat, scale,client,thread) :
+	if datadir != '' and testset != '' and repeat != '' and scale != '' :
+        	deviceNumber = os.stat(datadir).st_dev
                 deviceNode = ''
                 context = pyudev.Context()
                 for device in context.list_devices(subsystem='block', DEVTYPE='partition'):
@@ -17,14 +18,14 @@ def getIOCount (delay, datadir, testset, repeat, scale) :
                         	deviceNode = device.device_node
 
         	try :
-			f = open('disk_io_count.csv','ab')
-			cs = csv.writer(f,delimiter=';')
                 	while True :
+				f = open('disk_io_count.csv','ab')
+				cs = csv.writer(f,delimiter=';')
                                 io = psutil.disk_io_counters(perdisk=True)
                                 for node in io.keys() :
                                         if deviceNode.find(node) != -1 :
                                                 io = io[node]
-                                                ioCount = str(testset) + ',' + str(repeat) + ',' + str(scale) + ',' + \
+                                                ioCount = str(testset) + ',' + str(repeat) + ',' + str(scale) + ',' + str(client) + ',' + str(thread) + ',' + \
                                                         str( io.write_count ) + ',' + \
                                                         str( io.read_count ) + ',' + \
                                                         str( io.write_bytes ) + ',' + \
@@ -33,7 +34,7 @@ def getIOCount (delay, datadir, testset, repeat, scale) :
                                                         str( io.read_time ) 
                                 cs.writerow(ioCount.split(','))
                                 time.sleep(delay)
-			f.close()
+				f.close()
         	except Exception as err :
                 	print (err)
                 	sys.exit(0)
@@ -42,3 +43,15 @@ def getIOCount (delay, datadir, testset, repeat, scale) :
 	else :
 		print ('invalid parameter(s) passed. This script will now exit ..')
 		sys.exit(0)	
+
+if __name__ == '__main__' :
+        parser = argparse.ArgumentParser(prog='migrate', description ='migrate data')
+        parser.add_argument ('--delay', type=int, required=True)
+        parser.add_argument ('--datadir', type=str, required=True)
+        parser.add_argument ('--testset', type=int, required=True)
+        parser.add_argument ('--repeat', type=int, required=True)
+	parser.add_argument ('--scale', type=int, required=True)
+	parser.add_argument ('--client', type=int, required=True)
+	parser.add_argument ('--thread', type=int, required=True)
+        args = parser.parse_args()
+	getIOCount (args.delay, args.datadir, args.testset, args.repeat, args.scale,args.client)

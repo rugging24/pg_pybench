@@ -37,11 +37,11 @@ def getLevelScale(testType) :
 		mem = psutil.virtual_memory()
 		RAM = math.ceil(mem.total/float(1024*1024*1024))	
 		# set the scale 
-		ratio = [0.1,0.9,4.0]
-		titles = ['In Buffer','Mostly in Cache', 'All on disk']
+		ratio = [0.1] #,0.9,4.0]
+		titles = ['In Buffer'] #,'Mostly in Cache', 'All on disk']
 		i = 0
 		for r in ratio :
-			scales.update( "'" + titles[i]] + "'" : int(math.ceil((float(75) * float(r) * float(RAM)))) )
+			scales.update( {"'" + titles[i] + "'" : int(math.ceil((float(75) * float(r) * float(RAM))))} )
 			i += 1
 	elif str(testType).lower() == 'custom' :
 		# Scale will always be 1 for a custom test
@@ -57,10 +57,10 @@ def storeTestLatency(test) :
                  timing where tests.test=timing.test), max_latency=(select max(latency)from \
                  timing where tests.test=timing.test), percentile_90_latency=(select latency \
                  from timing where tests.test=timing.test \
-                 order by latency offset (round(0.90*trans)) limit 1) where tests.test='{0:s}'".format(test.split("\n")[0]) 
+                 order by latency offset (round(0.90*trans)) limit 1) where tests.test='{0:d}'".format(test) 
 
-def copyCSV(basedir,filename) :
-	return " \copy timing from '{0:s}' with csv ".format(basedir + '/' + filename)
+def copyCSV(basedir,filename,delimiter,tablename) :
+	return " copy {2:s} from '{0:s}' with (format csv ,delimiter '{1:s}')".format(basedir + '/' + filename, delimiter,tablename)
 
 def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
 	return "insert into tests(script,clients,workers,set,scale,dbsize,start_time,end_time,tps,trans) \
@@ -68,8 +68,9 @@ def insertTestResult(script,client,thread,scale,testdb,start,end,tps,trans) :
                 " returning test".format( script,str(client),str(thread),str(scale),testdb,str(start.rstrip()),str(end.rstrip()),str(tps),str(trans)  )
 
 
-def createDBText(dbname) :
-	return 'CREATE DATABASE {0:s} TABLESPACE = {1:s}'.format(dbname, getTableSpaceName())
+def createDBText(dbname,tablespace) :
+	tspace = tablespace if tablespace == 'pg_default' else getTableSpaceName()
+	return "CREATE DATABASE {0:s} TABLESPACE = '{1:s}'".format(dbname, tspace)
 
 def dropDBText(dbname) :
 	return "DROP DATABASE IF EXISTS {0:s} ".format(dbname)
@@ -87,7 +88,7 @@ def dropTableSpaceText() :
 
 
 def checkDBExist(dbname) :
-	return "select coalesce(datname,null) from pg_stat_database where datname = '{0:s}'".format(dbname)
+	return "select coalesce(datname) from pg_stat_database where datname = '{0:s}'".format(dbname)
 
 
 def getSysInfo(version) :
@@ -95,23 +96,18 @@ def getSysInfo(version) :
 	if version <= 9.4 :
 		text = "select current_setting('shared_buffers') , current_setting('checkpoint_segments') , current_setting('checkpoint_completion_target')"
 	elif version >= 9.5 : 
-		text = "select current_setting('shared_buffers') , current_setting('max_wal_size') , current_setting('checkpoint_completion_target')"
+		text = """select '{"shared_buffers":' || current_setting('shared_buffers') || ',"max_wal_size":' || current_setting('max_wal_size') || ',"checkpoint_completion_target":' \
+			|| current_setting('checkpoint_completion_target') || '}'"""
 	return text 
 
 def insertNewTest(version,sysinfo,tbsLocation) :
-	props = {}
 	if version <= 9.4 :
 		keys = ['shared_buffers','checkpoint_segments','checkpoint_completion_target']
 	elif version >= 9.5 :
 		keys = ['shared_buffers','max_wal_size','checkpoint_completion_target']
-	i = 0 
-	
-	for p in sysinfo :
-		props.update("'" + keys[i] + "'" : p )   
-		i += 1
 
 	comment= 'Test performed at {0:s} with the sys parameters stated in the config_info column - '.format( str(datetime.datetime.now()) )
-	return	"insert into testset(set,config_info,info) select coalesce(max(set),0) + 1,'{0:s}','{1:s}' from testset returning set".format(str(props),comment) 
+	return	"insert into testset(set,config_info,info) select coalesce(max(set),0) + 1,'{0:s}','{1:s}' from testset returning set".format(str(sysinfo),comment) 
 
 def getDBVersion(param) :
 	pgversion = sql.queryDB (param,"select substring(version() from '(\d\.\d)')","read")[1][0]	

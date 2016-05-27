@@ -41,7 +41,7 @@ def formulateTestQuery(testType) :
 	elif testType == 'write' : 
 		l = texts()[0:6] 
 		l.append(texts()[12])
-	elif tesyType == 'update' :
+	elif testType == 'update' :
 		l = texts()[0:9] + texts()[10:12]
 		l.append(texts()[13])
 		writeTests(fname,l)

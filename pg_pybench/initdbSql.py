@@ -14,6 +14,8 @@ def getInitdbText() :
 	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,\
 	repeat_number integer ,\
 	scale integer,\
+	client integer, \
+	workers	integer, \
 	load_1min numeric,\
 	load_5min numeric, \
 	load_15min numeric\
@@ -24,8 +26,11 @@ def getInitdbText() :
 	set int NOT NULL REFERENCES testset(set) ON DELETE CASCADE,\
 	repeat_number integer ,\
 	scale integer,\
+	client integer, \
+	workers integer, \
 	write_count numeric, \
 	read_count numeric, \
+	write_bytes numeric,\
 	read_bytes numeric, \
 	write_time numeric, \
 	read_time  numeric \
@@ -52,8 +57,8 @@ def getInitdbText() :
   	rate_limit numeric default null\
   	);\
 
-	DROP TABLE IF EXISTS timing;\
-	-- Staging table, for loading in data from CSV\
+	DROP TABLE IF EXISTS timing; \
+
 	CREATE TABLE timing(\
   	ts timestamp,\
   	filenum int, \

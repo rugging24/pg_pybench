@@ -5,12 +5,14 @@ import subprocess
 import glob,datetime
 import cpu_load as cpu
 import io_count as io
+import os
+import executeSql as sql
 
-def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,runtime) : 
+def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,runtime,resultDBParam,thread,trans=None) : 
 #	pgbench -t 1000 -T 6000 -M simple -l -j 4 -c 50 dbname
 	queryMode = param.get('querymode')
-	thread = param.get('threadcount')
 	db = param.get('testdbname')
+	delay = param.get('delay')
 	
 	# this will throw a huge error if thread is not a multiple of client, so we try to normilize that
 	if int(client) % int(thread) != 0 : 
@@ -21,18 +23,18 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,
 	start_time  = str(datetime.datetime.now())  # might be a few milli or micro sec off, but it won't influence the results.
 	end_time = ''
 
-	# start saving the cpu load and the I/O count 
-	cpu_load = subprocess.Popen( [ cpu.(5,str(testset),str(repeat),str(scale)) ] , stdout=subprocess.PIPE )
-	io_count = subprocess.Popen( [ io.getIOCount(5, datadir, str(testset), str(repeat), str(scale)) ] , stdout=subprocess.PIPE )
-
+	# start saving the cpu load and the I/O count "--client",str(client)
+	execdir = param.get('execdir')
+	cpu_load = subprocess.Popen( ["python",execdir + os.sep + "cpu_load.py","--thread",str(thread),"--delay",str(delay),"--testset",str(testset),"--repeat",str(repeat),"--scale",str(scale),"--client",str(client) ] , stdout=subprocess.PIPE )
+	io_count = subprocess.Popen( [ "python" , execdir + os.sep + "io_count.py" ,"--thread",str(thread),"--delay", str(delay),"--datadir" ,str(datadir),"--testset", str(testset), "--repeat",str(repeat),"--scale", str(scale),"--client",str(client)  ] , stdout=subprocess.PIPE )
+	
 	if trans == None :
-		out = subprocess.check_output( uf.utilfunc('testdb','pgbench',param) + ['-M',queryMode,'-f',script,'-T',runtime,'-j',\
-	 	thread,'-c',client,'-l','-s',str(scale),db] )
-
+		out = subprocess.check_output( uf.utilfunc('testdb','pgbench',param) + ['-M',str(queryMode),'-f',script,'-T',str(runtime),'-j',\
+	 	str(thread),'-c',str(client),'-l','-s',str(scale),db] )
 		end_time = str(datetime.datetime.now())
-	elif  :
-		out = subprocess.check_output( uf.utilfunc('testdb','pgbench',param) + ['-M',queryMode,'-f',script,'-t',trans,'-j',\
-                thread,'-c',client,'-l','-s',str(scale),db] )
+	elif trans != None and runtime == None :
+		out = subprocess.check_output( uf.utilfunc('testdb','pgbench',param) + ['-M',queryMode,'-f',script,'-t',str(trans),'-j',\
+                str(thread),'-c',str(client),'-l','-s',str(scale),db] )
 		
 		end_time = str(datetime.datetime.now())
 
@@ -54,8 +56,6 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,
 	f.write(out)
 	f.close()
 
-	print (out) 
-
 	r = open('result.txt','r')
 	trans = ''
 	tps = ''
@@ -67,19 +67,24 @@ def runBenchwarmer (testset,repeat,scale,client,script,param,datadir,trans=None,
 
 	r.close()
 		
-	test = subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',\
-               uf.insertTestResult( script,client,thread,scale,param.get('testdbname'),start_time.rstrip(),end_time.rstrip(),tps,trans  )] )
+	#test = subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',\
+              # uf.insertTestResult( script,client,thread,scale,param.get('testdbname'),start_time.rstrip(),end_time.rstrip(),tps,trans  )] )
 
+	test = sql.queryDB (resultDBParam,uf.insertTestResult( script,client,thread,scale,param.get('testdbname'),start_time.rstrip(),end_time.rstrip(),tps,trans  ),'read',1)
 
-	for f in glob.glob('*_log*') :
-                uf.writeCSV(f,test.split("\n")[0])
+	if test[0] == 0 :
+		for f in glob.glob('*_log*') :
+                	uf.writeCSV(f,test[1][0])
 
-	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'timing.csv') ] )
-	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv') ] )
-	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv') ] )
+		subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'timing.csv',',','timing') ] )
+		subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'disk_io_count.csv',';','disk_io_count') ] )
+		subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.copyCSV(param.get('pwd'),'load.csv',';','load_average') ] )
 
 	
-	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',uf.storeTestLatency(test) ] )
+		subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-tAc',uf.storeTestLatency(test[1][0]) ] )
 
-	#subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.truncateTiming() ] )
+		subprocess.check_output(uf.utilfunc('resultdb','psql',param) + ['-c',uf.truncateTiming() ] )
+	else : 
+		print ("Test results could not be saves ")
+		sys.exit(0)
 
